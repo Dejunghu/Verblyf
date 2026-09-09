@@ -6,3 +6,6 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 .netlify/
+
+# Uitgeleverde repo-bundles horen niet in de geschiedenis
+*.bundle
