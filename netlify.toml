@@ -3,14 +3,15 @@
 # Netlify Functions. Je hoeft niets te exporteren of te statificeren.
 
 [build]
-  command = "npx prisma generate && npm run build"
+  # De placeholder-URL geldt alleen tijdens het bouwen: Prisma wil bij het
+  # genereren een waarde zien. Tijdens het draaien blijft DATABASE_URL leeg,
+  # zodat de site netjes in demo-modus staat tot de echte database er is.
+  command = "DATABASE_URL=\"postgresql://placeholder:placeholder@localhost:5432/placeholder\" npx prisma generate && npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
-  # Prisma heeft een engine nodig die op de Netlify-runtime draait.
-  PRISMA_CLI_BINARY_TARGETS = "native,rhel-openssl-3.0.x"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
@@ -18,7 +19,10 @@
 # Preview-deploys van pull requests: handig als ik een verbetering voorstel —
 # je ziet hem live voordat hij naar productie gaat.
 [context.deploy-preview]
-  command = "npx prisma generate && npm run build"
+  # De placeholder-URL geldt alleen tijdens het bouwen: Prisma wil bij het
+  # genereren een waarde zien. Tijdens het draaien blijft DATABASE_URL leeg,
+  # zodat de site netjes in demo-modus staat tot de echte database er is.
+  command = "DATABASE_URL=\"postgresql://placeholder:placeholder@localhost:5432/placeholder\" npx prisma generate && npm run build"
 
 [[headers]]
   for = "/*"

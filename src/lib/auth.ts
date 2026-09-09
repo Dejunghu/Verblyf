@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { prisma } from './db';
+import { hasDatabase, prisma } from './db';
 
 /**
  * Accounts.
@@ -12,7 +12,16 @@ import { prisma } from './db';
  */
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
-  secret: process.env.BETTER_AUTH_SECRET,
+  // In demo-modus (geen database) staan accounts uit; Better Auth wil dan toch
+  // een waarde zien om te kunnen initialiseren. Zodra er een database is, is
+  // BETTER_AUTH_SECRET verplicht — anders weigert de app te starten.
+  secret:
+    process.env.BETTER_AUTH_SECRET ??
+    (hasDatabase
+      ? (() => {
+          throw new Error('BETTER_AUTH_SECRET ontbreekt. Genereer er een met: openssl rand -base64 32');
+        })()
+      : 'demo-modus-accounts-staan-uit'),
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
 
   emailAndPassword: {
@@ -42,15 +51,25 @@ export const auth = betterAuth({
     },
   },
 
+  // Alleen aanmelden wat daadwerkelijk is ingesteld: een provider met een lege
+  // clientId laat Better Auth al bij het opstarten struikelen.
   socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-    },
-    apple: {
-      clientId: process.env.APPLE_CLIENT_ID ?? '',
-      clientSecret: process.env.APPLE_CLIENT_SECRET ?? '',
-    },
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          },
+        }
+      : {}),
+    ...(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET
+      ? {
+          apple: {
+            clientId: process.env.APPLE_CLIENT_ID,
+            clientSecret: process.env.APPLE_CLIENT_SECRET,
+          },
+        }
+      : {}),
   },
 
   session: {
