@@ -49,7 +49,7 @@ export default async function ZoekenPage({ searchParams }: { searchParams: Searc
         {hotels.length} {hotels.length === 1 ? 'accommodatie' : 'accommodaties'} in {query.destination}
       </h1>
       <p className="text-sm text-ink-soft">
-        {query.checkIn} t/m {query.checkOut} · {query.adults} gasten · prijzen inclusief btw en onze 2%
+        {query.checkIn} t/m {query.checkOut} · {query.adults} gasten · prijzen inclusief btw en 8% servicekosten
       </p>
 
       {errors.length > 0 && (

@@ -5,12 +5,12 @@ import type { Money, RoomOffer } from './suppliers/types';
  *
  * Twee verdienmodellen, allebei ondersteund:
  *
- *  1. MARKUP     — de gast betaalt de hotelprijs + 2% servicekosten.
+ *  1. MARKUP     — de gast betaalt de hotelprijs + 8% servicekosten.
  *                  Zichtbaar als aparte regel in de checkout. Wij innen het
  *                  volledige bedrag en betalen het hotel de netto-prijs.
  *
  *  2. COMMISSION — de gast betaalt precies de hotelprijs; het hotel/de
- *                  leverancier betaalt ons 2% commissie uit dat bedrag.
+ *                  leverancier betaalt ons 8% commissie uit dat bedrag.
  *                  Onzichtbaar voor de gast, maar prijs-competitiever.
  *
  * Standaard: MARKUP. De gast ziet de servicekosten als aparte regel, vanaf
@@ -41,7 +41,7 @@ export const FEE_CONFIG = {
 export interface PriceBreakdown {
   /** Netto-inkoop bij de leverancier. */
   supplierTotal: Money;
-  /** Onze fee (2%, met onder- en bovengrens). */
+  /** Onze fee (8%, met onder- en bovengrens). */
   serviceFee: Money;
   /** Wat de gast in totaal afrekent. */
   guestTotal: Money;
@@ -132,7 +132,7 @@ export function formatMoney(m: Money, locale = 'nl-NL'): string {
 }
 
 /**
- * Waarschuwing voor het businessmodel: bij 2% fee en kaartbetalingen houdt de
+ * Marge-check: bij 8% fee blijft elke betaalmethode rendabel, maar de
  * PSP een groot deel van de marge. Deze helper zegt of een boeking rendabel is
  * en, zo niet, wat het omslagpunt is.
  */

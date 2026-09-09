@@ -1,8 +1,9 @@
 import Link from 'next/link';
 
 const COMPARISON = [
-  { label: 'Commissie per boeking', ota: '15 – 18%', verblyf: '2%' },
-  { label: 'Bij €200 kamerprijs', ota: '€30 – €36 naar het platform', verblyf: '€4 naar Verblyf' },
+  { label: 'Commissie voor het hotel', ota: '15 – 18%', verblyf: '0%' },
+  { label: 'Wat de gast extra betaalt', ota: 'Zit in de kamerprijs', verblyf: '8%, apart getoond' },
+  { label: 'Bij €200 kamerprijs', ota: '€30 – €36 naar het platform', verblyf: '€0 naar het platform' },
   { label: 'Uitbetaling', ota: 'Maandelijks, achteraf', verblyf: 'Direct op je eigen Stripe-account' },
   { label: 'Gastgegevens', ota: 'Afgeschermd', verblyf: 'Volledig van jou' },
   { label: 'Pariteitsclausule', ota: 'Vaak verplicht', verblyf: 'Geen' },
@@ -12,11 +13,11 @@ export default function PartnersPage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-16">
       <Link href="/" className="display text-lg text-brand">Verblyf</Link>
-      <h1 className="display mt-8 text-4xl">Van 18% naar 2%.</h1>
+      <h1 className="display mt-8 text-4xl">U betaalt ons niets.<br />Uw gast betaalt 8%.</h1>
       <p className="mt-4 max-w-2xl text-lg text-ink-soft">
         Een hotel met 60 kamers en een gemiddelde kamerprijs van €150 betaalt bij de grote platforms
-        al snel €90.000 commissie per jaar. Bij ons is dat €10.000. Het verschil houd je zelf, of je
-        geeft het door aan de gast.
+        al snel €90.000 commissie per jaar. Bij ons is dat nul: de gast betaalt 8% servicekosten
+        bovenop uw kamerprijs. Wat u nu aan commissie kwijt bent, houdt u zelf.
       </p>
 
       <table className="mt-10 w-full overflow-hidden rounded-2xl bg-surface text-left text-sm ring-1 ring-line">

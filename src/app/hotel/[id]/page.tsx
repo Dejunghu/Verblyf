@@ -75,7 +75,7 @@ export default async function HotelPage({
               <div className="flex items-center gap-5">
                 <div className="text-right">
                   <p className="display text-xl">{formatMoney(price.guestTotal)}</p>
-                  <p className="text-xs text-ink-soft">{price.nights} nachten, incl. 2% service</p>
+                  <p className="text-xs text-ink-soft">{price.nights} nachten, incl. 8% servicekosten</p>
                 </div>
                 <Link
                   href={`/boeken?offerId=${encodeURIComponent(offer.id)}&hotelId=${encodeURIComponent(hotel.id)}&checkIn=${parsed.data.checkIn}&checkOut=${parsed.data.checkOut}&adults=${parsed.data.adults}&rooms=${parsed.data.rooms}`}

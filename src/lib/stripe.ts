@@ -12,14 +12,14 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? 'sk_test_place
  *
  * A. MERCHANT OF RECORD (standaard bij bedbank-tarieven)
  *    De gast betaalt ons het volledige bedrag. Wij betalen de leverancier via
- *    een virtual credit card of op rekening. Onze 2% blijft achter op onze
+ *    een virtual credit card of op rekening. Onze 8% blijft achter op onze
  *    Stripe-balans. Eenvoudig, maar wij dragen het chargeback-risico.
  *
  * B. DESTINATION CHARGE (bij direct-connect hotels met een eigen Stripe-account)
  *    De gast betaalt, Stripe splitst automatisch: het hotel krijgt de netto-
  *    prijs op zijn eigen account, wij houden `application_fee_amount` in.
  *    Het hotel draagt het chargeback-risico en wij raken het geld nooit aan —
- *    juridisch en fiscaal veruit het schoonste model voor een 2%-bemiddelaar.
+ *    juridisch en fiscaal veruit het schoonste model voor een bemiddelaar.
  */
 
 export interface CheckoutInput {
@@ -60,7 +60,7 @@ export async function createCheckoutSession(input: CheckoutInput) {
       price_data: {
         currency: breakdown.serviceFee.currency.toLowerCase(),
         unit_amount: breakdown.serviceFee.amount,
-        product_data: { name: 'Servicekosten Verblyf (2%)' },
+        product_data: { name: 'Servicekosten Verblyf (8%)' },
       },
     });
   }

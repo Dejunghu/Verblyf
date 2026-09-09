@@ -20,14 +20,15 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-16">
         <p className="mb-3 inline-block rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
-          2% servicefee — geen 15 tot 18%
+          Het hotel betaalt geen commissie
         </p>
         <h1 className="display max-w-3xl text-5xl leading-[1.05] md:text-6xl">
-          Hetzelfde hotel. <br />Een eerlijker prijskaartje.
+          Rustig kiezen, en <br />precies weten wat je betaalt.
         </h1>
         <p className="mt-5 max-w-xl text-lg text-ink-soft">
-          De grote boekingssites rekenen hotels 15 tot 18% commissie. Wij rekenen 2%. Dat verschil
-          gaat naar de kamerprijs — en naar het hotel zelf.
+          De grote boekingssites houden 15 tot 18% van elke overnachting in. Bij ons betaalt het
+          hotel niets en betaal jij 8% servicekosten — zichtbaar vanaf het eerste zoekresultaat,
+          niet pas op de laatste pagina.
         </p>
         <div className="mt-10">
           <SearchForm />
@@ -54,7 +55,7 @@ export default function HomePage() {
 
       <footer className="mt-16 border-t border-line bg-surface py-10 text-sm text-ink-soft">
         <div className="mx-auto max-w-6xl px-6">
-          <p>Verblyf B.V. — bemiddelaar in accommodatie. Wij verkopen uitsluitend verblijf, geen pakketreizen.</p>
+          <p>Verblyf B.V. — bemiddelaar in accommodatie. Wij verkopen uitsluitend verblijf, geen pakketreizen. Alle bedragen zijn inclusief btw en de servicekosten van 8%.</p>
         </div>
       </footer>
     </main>
