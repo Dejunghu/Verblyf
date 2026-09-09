@@ -5,8 +5,48 @@ import { buildPriceBreakdown, formatMoney } from '@/lib/pricing';
 import { searchSchema } from '@/lib/validation';
 import { hotelIllustration, type Palette, type Style } from '@/components/illustration';
 import { SEED_HOTELS } from '@/lib/suppliers/inventory';
+import { HotelJsonLd } from '@/components/StructuredData';
+import { baseUrl } from '@/lib/config';
+import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
+
+/** Zonder datums in de URL toch een werkende pagina: over twee weken, twee nachten. */
+function defaultDates() {
+  const inDate = new Date();
+  inDate.setDate(inDate.getDate() + 14);
+  const outDate = new Date(inDate);
+  outDate.setDate(outDate.getDate() + 2);
+  return {
+    checkIn: inDate.toISOString().slice(0, 10),
+    checkOut: outDate.toISOString().slice(0, 10),
+    adults: '2',
+    rooms: '1',
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const code = decodeURIComponent(id).replace(/^mock:/, '');
+  const seed = SEED_HOTELS.find((h) => h.code === code);
+  if (!seed) return { title: 'Hotel niet gevonden' };
+
+  return {
+    title: `${seed.name}, ${seed.city}`,
+    description: `${seed.description} Boek rechtstreeks: het hotel betaalt geen commissie, jij betaalt 8% servicekosten.`,
+    alternates: { canonical: `${baseUrl()}/hotel/${encodeURIComponent(decodeURIComponent(id))}` },
+    openGraph: {
+      title: `${seed.name} — ${seed.city}`,
+      description: seed.description,
+      type: 'website',
+      locale: 'nl_NL',
+    },
+  };
+}
 
 const BOARD_LABEL: Record<string, string> = {
   ROOM_ONLY: 'Zonder ontbijt',
@@ -27,7 +67,7 @@ export default async function HotelPage({
   const raw = await searchParams;
   const hotelId = decodeURIComponent(id);
 
-  const parsed = searchSchema.safeParse({ destination: 'nl', ...raw });
+  const parsed = searchSchema.safeParse({ destination: 'nl', ...defaultDates(), ...raw });
   if (!parsed.success) notFound();
 
   const supplier = supplierOfHotelId(hotelId);
@@ -41,6 +81,14 @@ export default async function HotelPage({
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
+      <HotelJsonLd
+        name={hotel.name}
+        address={hotel.address}
+        city={hotel.city}
+        country={hotel.country}
+        stars={hotel.stars}
+        url={`${baseUrl()}/hotel/${encodeURIComponent(hotel.id)}`}
+      />
       <Link href="/" className="display text-lg text-brand">Verblyf</Link>
 
       <div className="mt-6 overflow-hidden rounded-[18px] ring-1 ring-line">

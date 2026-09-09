@@ -14,6 +14,7 @@ export default function HomePage() {
           <nav className="flex items-center gap-6 text-sm">
             <Link href="/partners" className="hover:text-brand">Voor hotels</Link>
             <Link href="/boeking" className="hover:text-brand">Mijn boeking</Link>
+            <Link href="/inloggen" className="hover:text-brand">Inloggen</Link>
           </nav>
         </div>
       </header>

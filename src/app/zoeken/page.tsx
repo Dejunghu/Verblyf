@@ -8,6 +8,20 @@ import { SEED_HOTELS } from '@/lib/suppliers/inventory';
 
 export const dynamic = 'force-dynamic';
 
+function defaultDates() {
+  const inDate = new Date();
+  inDate.setDate(inDate.getDate() + 14);
+  const outDate = new Date(inDate);
+  outDate.setDate(outDate.getDate() + 2);
+  return {
+    checkIn: inDate.toISOString().slice(0, 10),
+    checkOut: outDate.toISOString().slice(0, 10),
+    adults: '2',
+    rooms: '1',
+    destination: 'Nederland',
+  };
+}
+
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 function artFor(hotelName: string): { style: Style; palette: Palette; seed: string } {
@@ -17,7 +31,12 @@ function artFor(hotelName: string): { style: Style; palette: Palette; seed: stri
 
 export default async function ZoekenPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const parsed = searchSchema.safeParse(raw);
+
+  // Zonder datums toch een bruikbaar resultaat tonen: over twee weken, twee
+  // nachten. Een lege zoekpagina is een doodlopende weg voor bezoekers die
+  // via een gedeelde link binnenkomen.
+  const withDefaults = { ...defaultDates(), ...raw };
+  const parsed = searchSchema.safeParse(withDefaults);
 
   if (!parsed.success) {
     return (

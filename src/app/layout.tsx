@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { DemoNotice } from '@/components/DemoNotice';
+import { SiteJsonLd } from '@/components/StructuredData';
+import { baseUrl } from '@/lib/config';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl()),
   title: {
     default: 'Verblyf — hotels boeken zonder commissie voor het hotel',
     template: '%s · Verblyf',
@@ -23,7 +27,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <DemoNotice />
+        {children}
+        <SiteJsonLd />
+      </body>
     </html>
   );
 }
