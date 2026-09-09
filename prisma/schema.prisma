@@ -1,0 +1,250 @@
+// Verblyf — datamodel
+// Draait op PostgreSQL (Neon/Supabase/RDS). `npx prisma migrate dev` om te starten.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// ---------------------------------------------------------------------------
+/// Accounts (Better Auth) — user/session/account/verification zijn de tabellen
+/// die Better Auth verwacht; de extra velden staan in `auth.ts` aangemeld.
+/// ---------------------------------------------------------------------------
+
+model User {
+  id             String   @id
+  name           String?
+  email          String   @unique
+  emailVerified  Boolean  @default(false)
+  image          String?
+  phone          String?
+  countryCode    String   @default("NL")
+  marketingOptIn Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sessions  Session[]
+  accounts  Account[]
+  bookings  Booking[]
+  favorites Favorite[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String // credential | google | apple
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String? // alleen bij providerId = credential
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+/// Opgeslagen hotels. `hotelId` is de samengestelde id (`liteapi:123`), zodat
+/// een favoriet blijft werken als we later van leverancier wisselen.
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotelId   String
+  hotelName String
+  hotelCity String
+  photoUrl  String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, hotelId])
+  @@index([userId])
+}
+
+model Booking {
+  id        String @id @default(cuid())
+  reference String @unique // VBF-XXXXXX, tonen aan de gast
+
+  // Leverancier
+  supplier           String
+  supplierOfferId    String
+  supplierBookingId  String?
+  confirmationNumber String?
+
+  // Hotel-snapshot (bewaren: leveranciersdata kan later wijzigen)
+  hotelId      String
+  hotelName    String
+  hotelCity    String
+  hotelAddress String
+  roomName     String
+  boardType    String
+
+  checkIn  DateTime
+  checkOut DateTime
+  nights   Int
+  adults   Int
+  children Int      @default(0)
+  rooms    Int      @default(1)
+
+  // Geld — alles in centen
+  currency         String @default("EUR")
+  supplierTotal    Int
+  serviceFee       Int
+  guestTotal       Int
+  payoutToSupplier Int
+  feeModel         String @default("COMMISSION")
+
+  // Gast
+  guestFirstName  String
+  guestLastName   String
+  guestEmail      String
+  guestPhone      String
+  guestCountry    String
+  specialRequests String?
+
+  // Betaling
+  stripeSessionId String?       @unique
+  paymentIntentId String?
+  paymentStatus   PaymentStatus @default(PENDING)
+
+  status               BookingStatus @default(PENDING)
+  cancellationDeadline DateTime?
+  refundable           Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events     BookingEvent[]
+  property   Property?      @relation(fields: [propertyId], references: [id])
+  propertyId String?
+
+  /// Boeken kan zonder account; is de gast wel ingelogd, dan hangen we hem hier.
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  @@index([guestEmail])
+  @@index([checkIn])
+  @@index([status])
+  @@index([userId])
+}
+
+model BookingEvent {
+  id        String   @id @default(cuid())
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId String
+  type      String // SEARCHED, PAID, SUPPLIER_CONFIRMED, CANCELLED, REFUNDED, FAILED
+  message   String?
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([bookingId])
+}
+
+/// Hotels die rechtstreeks bij ons zijn aangesloten (geen bedbank ertussen).
+/// Deze betalen 2% commissie en krijgen hun uitbetaling via Stripe Connect.
+model Property {
+  id               String    @id @default(cuid())
+  name             String
+  city             String
+  country          String
+  address          String
+  email            String    @unique
+  phone            String?
+  stripeAccountId  String?   @unique // Connect-account voor destination charges
+  commissionRate   Decimal   @default(0.02) @db.Decimal(5, 4)
+  contractSignedAt DateTime?
+  active           Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+
+  bookings Booking[]
+  rooms    Room[]
+}
+
+/// Kamertype van een partnerhotel, met eigen foto's.
+model Room {
+  id          String   @id @default(cuid())
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId  String
+  name        String
+  description String?
+  bedType     String?
+  maxGuests   Int      @default(2)
+  sizeM2      Int?
+  baseRate    Int // centen per nacht
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  photos RoomPhoto[]
+
+  @@index([propertyId])
+}
+
+/// Eén geüploade foto. We bewaren alleen de Cloudinary-publicId; alle formaten
+/// worden daaruit afgeleid (zie lib/images.ts), dus er staan geen varianten in
+/// de database die uit de pas kunnen lopen.
+model RoomPhoto {
+  id        String   @id @default(cuid())
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId    String
+  publicId  String   @unique
+  width     Int
+  height    Int
+  alt       String
+  position  Int      @default(0)
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([roomId, position])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}

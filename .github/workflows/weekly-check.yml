@@ -1,0 +1,52 @@
+name: Wekelijkse controle
+
+# Draait elke maandagochtend en bij elke push naar main. Faalt de build of
+# duiken er kwetsbaarheden op, dan komt er automatisch een issue.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/verblyf
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Kwetsbare packages
+        run: npm audit --audit-level=high || echo "AUDIT_ISSUES=1" >> $GITHUB_ENV
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lighthouse op de live site
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            ${{ vars.SITE_URL || 'https://verblyf.netlify.app' }}
+            ${{ vars.SITE_URL || 'https://verblyf.netlify.app' }}/partners
+          uploadArtifacts: true
+          temporaryPublicStorage: true

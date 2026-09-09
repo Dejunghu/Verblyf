@@ -1,0 +1,28 @@
+# Verblyf op Netlify
+# De Next.js-runtime draait server components, API-routes en middleware als
+# Netlify Functions. Je hoeft niets te exporteren of te statificeren.
+
+[build]
+  command = "npx prisma generate && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # Prisma heeft een engine nodig die op de Netlify-runtime draait.
+  PRISMA_CLI_BINARY_TARGETS = "native,rhel-openssl-3.0.x"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Preview-deploys van pull requests: handig als ik een verbetering voorstel —
+# je ziet hem live voordat hij naar productie gaat.
+[context.deploy-preview]
+  command = "npx prisma generate && npm run build"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self)"
