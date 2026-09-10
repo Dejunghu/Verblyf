@@ -6,6 +6,16 @@ import { SearchForm } from '@/components/SearchForm';
 import { hotelIllustration, type Palette, type Style } from '@/components/illustration';
 import { SEED_HOTELS } from '@/lib/suppliers/inventory';
 
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Hotels zoeken',
+  description:
+    'Zoek hotels in Europa met de totaalprijs direct zichtbaar: kamerprijs plus 8% servicekosten, zonder toeslagen die pas bij het afrekenen verschijnen.',
+  alternates: { canonical: '/zoeken' },
+  robots: { index: false, follow: true },
+};
+
 export const dynamic = 'force-dynamic';
 
 function defaultDates() {

@@ -1,5 +1,14 @@
 import Link from 'next/link';
 
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Voor hotels — 0% commissie',
+  description:
+    'Geen commissie over uw kamerprijs, geen abonnement, geen pariteitsclausule. Uw gast betaalt 8% servicekosten; u houdt de volledige kamerprijs.',
+  alternates: { canonical: '/partners' },
+};
+
 const COMPARISON = [
   { label: 'Commissie voor het hotel', ota: '15 – 18%', verblyf: '0%' },
   { label: 'Wat de gast extra betaalt', ota: 'Zit in de kamerprijs', verblyf: '8%, apart getoond' },
