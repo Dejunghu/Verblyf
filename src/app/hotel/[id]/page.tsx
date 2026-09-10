@@ -77,7 +77,7 @@ export default async function HotelPage({
   const { hotel, offers } = result;
   const seed = SEED_HOTELS.find((s) => s.name === hotel.name);
   const style: Style = seed?.style ?? 'boutique';
-  const palette: Palette = seed?.palette ?? 'teal';
+  const palette: Palette = seed?.palette ?? 'stone';
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">

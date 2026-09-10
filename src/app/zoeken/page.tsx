@@ -26,7 +26,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 function artFor(hotelName: string): { style: Style; palette: Palette; seed: string } {
   const seed = SEED_HOTELS.find((s) => s.name === hotelName);
-  return { style: seed?.style ?? 'boutique', palette: seed?.palette ?? 'teal', seed: seed?.code ?? hotelName };
+  return { style: seed?.style ?? 'boutique', palette: seed?.palette ?? 'stone', seed: seed?.code ?? hotelName };
 }
 
 export default async function ZoekenPage({ searchParams }: { searchParams: SearchParams }) {
@@ -82,7 +82,7 @@ export default async function ZoekenPage({ searchParams }: { searchParams: Searc
           const art = artFor(hotel.name);
           return (
             <li key={hotel.id} className="grid gap-0 overflow-hidden rounded-[18px] bg-surface ring-1 ring-line md:grid-cols-[280px_1fr_auto]">
-              <div className="min-h-[180px]" dangerouslySetInnerHTML={{ __html: hotelIllustration(art.style, art.palette, art.seed) }} />
+              <div className="min-h-[180px]" dangerouslySetInnerHTML={{ __html: hotelIllustration(art.style, art.palette, art.seed, true) }} />
               <div className="p-6">
                 <h2 className="display text-xl">{hotel.name}</h2>
                 <p className="text-sm text-ink-soft">{hotel.address}</p>

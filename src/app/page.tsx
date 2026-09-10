@@ -41,7 +41,7 @@ export default function HomePage() {
         <div className="grid gap-6 md:grid-cols-3">
           {featured.map((h) => (
             <article key={h.code} className="overflow-hidden rounded-[18px] bg-surface ring-1 ring-line">
-              <div className="aspect-[16/10]" dangerouslySetInnerHTML={{ __html: hotelIllustration(h.style, h.palette, h.code) }} />
+              <div className="aspect-[16/10]" dangerouslySetInnerHTML={{ __html: hotelIllustration(h.style, h.palette, h.code, true) }} />
               <div className="p-5">
                 <h3 className="display text-lg">{h.name}</h3>
                 <p className="text-sm text-ink-soft">{h.neighbourhood}, {h.city}</p>

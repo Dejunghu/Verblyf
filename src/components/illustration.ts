@@ -2,128 +2,143 @@
  * Illustratiesysteem.
  *
  * In plaats van stockfoto's tekent Verblyf elk hotel als een gestileerde
- * gevel. Voordelen: geen licentiekosten, geen trage image-CDN, en een
- * herkenbare huisstijl die niet lijkt op elke andere boekingssite. Zodra een
- * leverancier echte foto's meelevert, wordt dit de fallback.
+ * gevel, in dezelfde stille steenkleuren als de rest van de site. Zodra een
+ * hotel eigen foto's uploadt, verdwijnt de tekening naar de achtergrond.
+ *
+ * Twee varianten:
+ *  - `compact` voor lijsten en kaarten: minder ramen, geen filmkorrel. Scheelt
+ *    ongeveer tweederde aan HTML op een zoekpagina met veertien hotels.
+ *  - volledig voor de hoteldetailpagina, waar het beeld groot in beeld staat.
  */
 
 export type Style = 'grachtenpand' | 'tower' | 'boutique' | 'kust' | 'paleis' | 'loft';
-export type Palette = 'teal' | 'sand' | 'plum' | 'forest' | 'copper' | 'indigo';
+export type Palette = 'stone' | 'slate' | 'clay' | 'moss' | 'sandstone';
 
-const PALETTES: Record<Palette, { sky: [string, string]; wall: string; wallDark: string; accent: string; ground: string }> = {
-  teal:   { sky: ['#bfe3dc', '#e8f2ee'], wall: '#0f5a52', wallDark: '#0a423c', accent: '#e8b04b', ground: '#0c4a44' },
-  sand:   { sky: ['#f6ddc0', '#fdf3e6'], wall: '#c07a45', wallDark: '#9a5c31', accent: '#2f5e57', ground: '#a8663a' },
-  plum:   { sky: ['#dcc9dd', '#f3e9f2'], wall: '#5b3552', wallDark: '#42253c', accent: '#e0a15c', ground: '#4b2b44' },
-  forest: { sky: ['#cfe0c4', '#eef4e8'], wall: '#2f5233', wallDark: '#213b25', accent: '#d9a441', ground: '#28472c' },
-  copper: { sky: ['#f2d3c1', '#fbeee6'], wall: '#a24b30', wallDark: '#7d3823', accent: '#2c5b62', ground: '#8c3f28' },
-  indigo: { sky: ['#c8cfe8', '#eaeef7'], wall: '#2c3a66', wallDark: '#1e2a4d', accent: '#e3a857', ground: '#26325a' },
+const PALETTES: Record<Palette, { a: string; b: string; mass: string; dark: string; glow: string }> = {
+  stone:     { a: '#d9d8d2', b: '#efeee9', mass: '#8d8b81', dark: '#6d6b62', glow: '#f4e7cd' },
+  slate:     { a: '#ccd2d4', b: '#e9edee', mass: '#79868c', dark: '#5b666b', glow: '#f2e8d6' },
+  clay:      { a: '#e0d3c9', b: '#f3ebe4', mass: '#9a8072', dark: '#786256', glow: '#f6e9d2' },
+  moss:      { a: '#d3d8cd', b: '#eef0ea', mass: '#7c8a76', dark: '#5e6a59', glow: '#f2ead4' },
+  sandstone: { a: '#e2dbcb', b: '#f4f0e6', mass: '#a2937a', dark: '#7f735d', glow: '#f7ecd6' },
 };
 
-function windows(x: number, y: number, cols: number, rows: number, w: number, h: number, gapX: number, gapY: number, fill: string, lit: string, seed: number) {
+function hash(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+function windows(
+  x: number, y: number, cols: number, rows: number,
+  w: number, h: number, gx: number, gy: number,
+  glow: string, seed: number,
+): string {
   let out = '';
   let n = seed;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       n = (n * 1103515245 + 12345) & 0x7fffffff;
-      const isLit = (n >> 16) % 5 === 0;
-      out += `<rect x="${x + c * (w + gapX)}" y="${y + r * (h + gapY)}" width="${w}" height="${h}" rx="1.5" fill="${isLit ? lit : fill}"/>`;
+      const lit = (n >> 16) % 4 === 0;
+      out += `<rect x="${x + c * (w + gx)}" y="${y + r * (h + gy)}" width="${w}" height="${h}" fill="${glow}" opacity="${lit ? '.9' : '.45'}"/>`;
     }
   }
   return out;
 }
 
-function hash(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return (h >>> 0) % 100000;
-}
+/** Zelfstandige SVG, viewBox 400×300. */
+export function hotelIllustration(style: Style, palette: Palette, seed = 'verblyf', compact = false): string {
+  const p = PALETTES[palette] ?? PALETTES.stone;
+  const s = hash(seed) % 100000;
+  const id = `a${hash(seed + style + palette)}`;
+  const d = compact ? 1 : 0; // in compacte modus minder ramenrijen
 
-/** Geeft een complete, zelfstandige SVG terug (400×260 viewBox). */
-export function hotelIllustration(style: Style, palette: Palette, seed = 'verblyf'): string {
-  const p = PALETTES[palette];
-  const id = `g${hash(seed + style + palette)}`;
-  const s = hash(seed);
+  let defs =
+    `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">` +
+      `<stop offset="0%" stop-color="${p.a}"/><stop offset="72%" stop-color="${p.b}"/></linearGradient>`;
+  if (!compact) {
+    defs +=
+      `<linearGradient id="${id}v" x1="0" y1="0" x2="0" y2="1">` +
+        `<stop offset="40%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".1"/></linearGradient>` +
+      `<filter id="${id}g"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" stitchTiles="stitch"/>` +
+        `<feColorMatrix type="saturate" values="0"/></filter>`;
+  }
+  defs += '</defs>';
 
-  const sky = `
-    <defs>
-      <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${p.sky[0]}"/>
-        <stop offset="100%" stop-color="${p.sky[1]}"/>
-      </linearGradient>
-      <linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="55%" stop-color="#000" stop-opacity="0"/>
-        <stop offset="100%" stop-color="#000" stop-opacity="0.14"/>
-      </linearGradient>
-    </defs>
-    <rect width="400" height="260" fill="url(#${id})"/>
-    <circle cx="${318 + (s % 30)}" cy="52" r="20" fill="#f4c86a" opacity="0.6"/>`;
+  let body =
+    `<rect width="400" height="300" fill="url(#${id})"/>` +
+    `<circle cx="${312 + (s % 26)}" cy="62" r="26" fill="${p.glow}" opacity=".5"/>`;
 
-  const body = ((): string => {
-    switch (style) {
-      case 'grachtenpand':
-        return `
-          <rect x="40" y="90" width="70" height="170" fill="${p.wallDark}"/>
-          <path d="M40 90 L75 58 L110 90 Z" fill="${p.wallDark}"/>
-          <rect x="115" y="66" width="80" height="194" fill="${p.wall}"/>
-          <path d="M115 66 h80 v-10 h-14 v-12 h-18 v12 h-16 v-12 h-18 v12 h-14 z" fill="${p.wall}"/>
-          <rect x="200" y="104" width="66" height="156" fill="${p.wallDark}"/>
-          <path d="M200 104 L233 74 L266 104 Z" fill="${p.wallDark}"/>
-          <rect x="271" y="86" width="74" height="174" fill="${p.wall}"/>
-          <path d="M271 86 L308 56 L345 86 Z" fill="${p.wall}"/>
-          ${windows(52, 110, 2, 4, 18, 24, 14, 14, p.sky[1], p.accent, s)}
-          ${windows(128, 88, 3, 5, 16, 22, 10, 14, p.sky[1], p.accent, s + 7)}
-          ${windows(211, 124, 2, 4, 18, 22, 12, 14, p.sky[1], p.accent, s + 13)}
-          ${windows(283, 106, 2, 4, 20, 24, 14, 14, p.sky[1], p.accent, s + 21)}
-          <rect x="0" y="238" width="400" height="22" fill="${p.ground}" opacity="0.35"/>`;
-      case 'tower':
-        return `
-          <rect x="46" y="150" width="78" height="110" fill="${p.wallDark}"/>
-          <rect x="140" y="40" width="120" height="220" fill="${p.wall}"/>
-          <rect x="140" y="40" width="120" height="10" fill="${p.accent}"/>
-          <rect x="276" y="112" width="82" height="148" fill="${p.wallDark}"/>
-          ${windows(152, 62, 5, 8, 14, 16, 6, 8, p.sky[1], p.accent, s)}
-          ${windows(58, 166, 3, 4, 16, 14, 8, 10, p.sky[1], p.accent, s + 5)}
-          ${windows(288, 128, 3, 5, 16, 14, 8, 10, p.sky[1], p.accent, s + 9)}
-          <rect x="0" y="242" width="400" height="18" fill="${p.ground}" opacity="0.35"/>`;
-      case 'boutique':
-        return `
-          <rect x="52" y="112" width="296" height="148" fill="${p.wall}"/>
-          <rect x="52" y="100" width="296" height="14" rx="4" fill="${p.wallDark}"/>
-          <path d="M52 172 h296 v14 h-296 z" fill="${p.accent}" opacity="0.85"/>
-          ${[0,1,2,3,4].map(i => `<path d="M${76 + i*56} 156 a14 14 0 0 1 28 0 v18 h-28 z" fill="${p.sky[1]}"/>`).join('')}
-          ${windows(76, 200, 5, 1, 28, 34, 28, 0, p.sky[1], p.accent, s)}
-          <rect x="182" y="206" width="36" height="54" rx="3" fill="${p.wallDark}"/>
-          <rect x="0" y="252" width="400" height="8" fill="${p.ground}" opacity="0.4"/>`;
-      case 'kust':
-        return `
-          <rect x="0" y="176" width="400" height="84" fill="${p.wall}" opacity="0.30"/>
-          <path d="M0 186 q40 -10 80 0 t80 0 t80 0 t80 0 t80 0 v74 H0 z" fill="${p.wall}" opacity="0.5"/>
-          <rect x="86" y="88" width="228" height="84" rx="6" fill="${p.wall}"/>
-          <rect x="86" y="88" width="228" height="12" rx="6" fill="${p.wallDark}"/>
-          ${windows(102, 112, 6, 2, 24, 18, 12, 10, p.sky[1], p.accent, s)}
-          <rect x="140" y="64" width="120" height="24" rx="6" fill="${p.wallDark}"/>
-          <path d="M0 246 q60 -12 120 0 t120 0 t160 0 v14 H0 z" fill="${p.ground}" opacity="0.45"/>`;
-      case 'paleis':
-        return `
-          <rect x="60" y="118" width="280" height="142" fill="${p.wall}"/>
-          <path d="M124 118 L200 80 L276 118 Z" fill="${p.wallDark}"/>
-          <rect x="124" y="112" width="152" height="12" fill="${p.accent}" opacity="0.9"/>
-          ${[0,1,2,3,4,5].map(i => `<rect x="${138 + i*26}" y="132" width="12" height="82" fill="${p.sky[1]}" opacity="0.75"/>`).join('')}
-          ${windows(74, 140, 2, 3, 20, 26, 14, 14, p.sky[1], p.accent, s)}
-          ${windows(288, 140, 2, 3, 20, 26, 14, 14, p.sky[1], p.accent, s + 3)}
-          <rect x="186" y="214" width="34" height="46" rx="2" fill="${p.wallDark}"/>
-          <rect x="0" y="252" width="400" height="8" fill="${p.ground}" opacity="0.4"/>`;
-      case 'loft':
-      default:
-        return `
-          <rect x="48" y="128" width="304" height="132" fill="${p.wall}"/>
-          ${[0,1,2,3].map(i => `<path d="M${48 + i*76} 128 v-34 l38 34 z" fill="${p.wallDark}"/>`).join('')}
-          ${[0,1,2,3].map(i => `<path d="M${86 + i*76} 128 v-34 l-38 34 z" fill="${p.sky[1]}" opacity="0.7"/>`).join('')}
-          ${windows(66, 148, 8, 3, 26, 24, 10, 12, p.sky[1], p.accent, s)}
-          <rect x="176" y="220" width="46" height="40" rx="2" fill="${p.wallDark}"/>
-          <rect x="0" y="252" width="400" height="8" fill="${p.ground}" opacity="0.4"/>`;
+  switch (style) {
+    case 'grachtenpand':
+      body +=
+        `<rect x="34" y="126" width="66" height="174" fill="${p.dark}"/><path d="M34 126 L67 96 L100 126 Z" fill="${p.dark}"/>` +
+        `<rect x="105" y="104" width="78" height="196" fill="${p.mass}"/>` +
+        `<path d="M105 104h78v-11h-14v-13h-18v13h-14v-13h-18v13h-14z" fill="${p.mass}"/>` +
+        `<rect x="188" y="140" width="64" height="160" fill="${p.dark}"/><path d="M188 140 L220 112 L252 140 Z" fill="${p.dark}"/>` +
+        `<rect x="257" y="120" width="76" height="180" fill="${p.mass}"/><path d="M257 120 L295 90 L333 120 Z" fill="${p.mass}"/>` +
+        windows(46, 146, 2, 4 - d, 18, 24, 14, 16, p.glow, s) +
+        windows(118, 126, 3, 5 - d, 16, 22, 10, 15, p.glow, s + 7) +
+        windows(199, 160, 2, 4 - d, 18, 22, 12, 15, p.glow, s + 13) +
+        windows(269, 142, 2, 4 - d, 20, 24, 14, 16, p.glow, s + 21);
+      break;
+    case 'tower':
+      body +=
+        `<rect x="40" y="182" width="80" height="118" fill="${p.dark}"/>` +
+        `<rect x="134" y="68" width="122" height="232" fill="${p.mass}"/>` +
+        `<rect x="270" y="146" width="86" height="154" fill="${p.dark}"/>` +
+        windows(146, 92, 5, 8 - d * 3, 14, 16, 7, 9, p.glow, s) +
+        windows(52, 198, 3, 4 - d, 16, 14, 8, 11, p.glow, s + 5) +
+        windows(282, 162, 3, 5 - d, 16, 14, 8, 11, p.glow, s + 9);
+      break;
+    case 'boutique': {
+      let arches = '';
+      for (let i = 0; i < 5; i++) arches += `<path d="M${72 + i * 58} 196a15 15 0 0 1 30 0v20h-30z" fill="${p.glow}" opacity=".62"/>`;
+      body +=
+        `<rect x="46" y="146" width="308" height="154" fill="${p.mass}"/>` +
+        `<rect x="46" y="134" width="308" height="13" fill="${p.dark}"/>` + arches +
+        windows(72, 238, 5, 1, 30, 34, 28, 0, p.glow, s) +
+        `<rect x="180" y="244" width="38" height="56" fill="${p.dark}"/>`;
+      break;
     }
-  })();
+    case 'kust':
+      body +=
+        `<rect x="0" y="212" width="400" height="88" fill="${p.mass}" opacity=".22"/>` +
+        `<path d="M0 222q42-11 84 0t84 0 84 0 84 0 84 0v78H0z" fill="${p.mass}" opacity=".4"/>` +
+        `<rect x="80" y="130" width="240" height="92" fill="${p.mass}"/>` +
+        `<rect x="80" y="130" width="240" height="12" fill="${p.dark}"/>` +
+        `<rect x="136" y="104" width="128" height="26" fill="${p.dark}"/>` +
+        windows(96, 158, 6, 2 - d, 25, 20, 12, 12, p.glow, s);
+      break;
+    case 'paleis': {
+      let cols = '';
+      for (let i = 0; i < 6; i++) cols += `<rect x="${134 + i * 27}" y="168" width="13" height="86" fill="${p.glow}" opacity=".55"/>`;
+      body +=
+        `<rect x="54" y="152" width="292" height="148" fill="${p.mass}"/>` +
+        `<path d="M120 152 L200 112 L280 152 Z" fill="${p.dark}"/>` + cols +
+        windows(68, 176, 2, 3 - d, 20, 26, 14, 15, p.glow, s) +
+        windows(286, 176, 2, 3 - d, 20, 26, 14, 15, p.glow, s + 3) +
+        `<rect x="184" y="254" width="34" height="46" fill="${p.dark}"/>`;
+      break;
+    }
+    case 'loft':
+    default: {
+      let saw = '';
+      for (let i = 0; i < 4; i++) {
+        saw += `<path d="M${42 + i * 79} 164v-36l40 36z" fill="${p.dark}"/>`;
+        saw += `<path d="M${82 + i * 79} 164v-36l-40 36z" fill="${p.glow}" opacity=".5"/>`;
+      }
+      body +=
+        `<rect x="42" y="164" width="316" height="136" fill="${p.mass}"/>` + saw +
+        windows(60, 186, 8, 3 - d, 27, 24, 10, 13, p.glow, s) +
+        `<rect x="172" y="258" width="48" height="42" fill="${p.dark}"/>`;
+      break;
+    }
+  }
 
-  return `<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustratie van het hotel" preserveAspectRatio="xMidYMid slice">${sky}${body}<rect width="400" height="260" fill="url(#${id}s)"/></svg>`;
+  if (!compact) {
+    body += `<rect width="400" height="300" fill="url(#${id}v)"/>` +
+            `<rect width="400" height="300" filter="url(#${id}g)" opacity=".055"/>`;
+  }
+
+  return `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tekening van de gevel" preserveAspectRatio="xMidYMid slice">${defs}${body}</svg>`;
 }
